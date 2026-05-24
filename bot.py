@@ -1,24 +1,17 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 import os
-import traceback
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
-intents.message_content = True
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-bot = commands.Bot(
-    command_prefix="!",
-    intents=intents
-)
+# =========================================================
+# SCRIPT BUTTON
+# =========================================================
 
-# =====================================================
-# SCRIPT BUTTON VIEW
-# =====================================================
-
-class ScriptView(discord.ui.View):
+class ScriptButton(discord.ui.View):
 
     def __init__(self, script):
         super().__init__(timeout=None)
@@ -26,59 +19,48 @@ class ScriptView(discord.ui.View):
 
     @discord.ui.button(
         label="Get Script!",
-        emoji="📜",
-        style=discord.ButtonStyle.success
+        style=discord.ButtonStyle.success,
+        emoji="📜"
     )
-    async def get_script(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button
-    ):
+    async def script_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         await interaction.response.send_message(
             f"```lua\n{self.script}\n```",
             ephemeral=True
         )
 
-# =====================================================
+# =========================================================
 # PANEL MODAL
-# =====================================================
+# =========================================================
 
-class PanelModal(discord.ui.Modal, title="Create Script Panel"):
+class PanelModal(discord.ui.Modal, title="Create Panel"):
 
     script_name = discord.ui.TextInput(
-        label="Script Name",
-        required=True
+        label="Script Name"
     )
 
     image_url = discord.ui.TextInput(
-        label="Image URL",
-        required=True
+        label="Image URL"
     )
 
     script_content = discord.ui.TextInput(
         label="Script",
-        style=discord.TextStyle.paragraph,
-        required=True
+        style=discord.TextStyle.paragraph
     )
 
     async def on_submit(self, interaction: discord.Interaction):
 
         embed = discord.Embed(
             title=self.script_name.value,
-            description="Press the button below to get the script.",
+            description="Click below to get the script.",
             color=0x2b2d31
         )
 
         embed.set_image(url=self.image_url.value)
 
-        embed.set_footer(
-            text=f"Made by {interaction.user}"
-        )
-
         await interaction.channel.send(
             embed=embed,
-            view=ScriptView(self.script_content.value)
+            view=ScriptButton(self.script_content.value)
         )
 
         await interaction.response.send_message(
@@ -86,87 +68,75 @@ class PanelModal(discord.ui.Modal, title="Create Script Panel"):
             ephemeral=True
         )
 
-# =====================================================
-# GIVEAWAY VIEW
-# =====================================================
+# =========================================================
+# GIVEAWAY BUTTON
+# =========================================================
 
-class GiveawayView(discord.ui.View):
+class GiveawayButton(discord.ui.View):
 
     def __init__(self):
         super().__init__(timeout=None)
-        self.entries = set()
+        self.users = []
 
     @discord.ui.button(
         label="Enter Giveaway",
-        emoji="🎁",
+        emoji="🎉",
         style=discord.ButtonStyle.primary
     )
-    async def enter_giveaway(
-        self,
-        interaction: discord.Interaction,
-        button: discord.ui.Button
-    ):
+    async def enter(self, interaction: discord.Interaction, button: discord.ui.Button):
 
-        if interaction.user.id in self.entries:
+        if interaction.user.id in self.users:
 
             await interaction.response.send_message(
-                "❌ You already entered.",
+                "❌ You already joined.",
                 ephemeral=True
             )
             return
 
-        self.entries.add(interaction.user.id)
+        self.users.append(interaction.user.id)
 
-        button.label = f"Entrants ({len(self.entries)})"
+        button.label = f"Entries: {len(self.users)}"
 
         await interaction.message.edit(view=self)
 
         await interaction.response.send_message(
-            "✅ You entered the giveaway.",
+            "✅ Joined giveaway.",
             ephemeral=True
         )
 
-# =====================================================
+# =========================================================
 # GIVEAWAY MODAL
-# =====================================================
+# =========================================================
 
 class GiveawayModal(discord.ui.Modal, title="Create Giveaway"):
 
-    giveaway_title = discord.ui.TextInput(
-        label="Giveaway Title",
-        required=True
+    title_input = discord.ui.TextInput(
+        label="Giveaway Title"
     )
 
-    total_winners = discord.ui.TextInput(
-        label="Total Winners",
-        required=True
+    winners_input = discord.ui.TextInput(
+        label="Total Winners"
     )
 
-    ends_in = discord.ui.TextInput(
-        label="Ends In",
-        placeholder="1 hour",
-        required=True
+    ends_input = discord.ui.TextInput(
+        label="Ends In"
     )
 
     async def on_submit(self, interaction: discord.Interaction):
 
         embed = discord.Embed(
-            title=self.giveaway_title.value,
+            title=f"🎉 {self.title_input.value}",
             description=(
-                f"🎁 Winners: {self.total_winners.value}\n"
-                f"⏰ Ends In: {self.ends_in.value}\n"
-                f"👑 Hosted By: {interaction.user.mention}"
+                f"👑 Hosted By: {interaction.user.mention}\n"
+                f"🏆 Winners: {self.winners_input.value}\n"
+                f"⏰ Ends In: {self.ends_input.value}"
             ),
             color=0x2b2d31
         )
 
-        embed.set_footer(
-            text="Click below to enter!"
-        )
-
         await interaction.channel.send(
             embed=embed,
-            view=GiveawayView()
+            view=GiveawayButton()
         )
 
         await interaction.response.send_message(
@@ -174,91 +144,41 @@ class GiveawayModal(discord.ui.Modal, title="Create Giveaway"):
             ephemeral=True
         )
 
-# =====================================================
-# /PANEL COMMAND
-# =====================================================
+# =========================================================
+# PANEL COMMAND
+# =========================================================
 
-@bot.tree.command(
-    name="panel",
-    description="Create a script panel"
-)
+@bot.tree.command(name="panel", description="Create script panel")
 async def panel(interaction: discord.Interaction):
 
     await interaction.response.send_modal(
         PanelModal()
     )
 
-# =====================================================
-# /GIVEAWAY COMMAND
-# =====================================================
+# =========================================================
+# GIVEAWAY COMMAND
+# =========================================================
 
-@bot.tree.command(
-    name="giveaway",
-    description="Create a giveaway"
-)
+@bot.tree.command(name="giveaway", description="Create giveaway")
 async def giveaway(interaction: discord.Interaction):
 
     await interaction.response.send_modal(
         GiveawayModal()
     )
 
-# =====================================================
-# READY EVENT
-# =====================================================
+# =========================================================
+# READY
+# =========================================================
 
 @bot.event
 async def on_ready():
 
-    try:
+    await bot.tree.sync()
 
-        synced = await bot.tree.sync()
+    print(f"Logged in as {bot.user}")
 
-        print("===================================")
-        print(f"✅ Logged in as {bot.user}")
-        print(f"✅ Synced {len(synced)} commands")
-        print("===================================")
-
-    except Exception as e:
-
-        print("SYNC ERROR:")
-        print(e)
-        traceback.print_exc()
-
-# =====================================================
-# COMMAND ERROR HANDLER
-# =====================================================
-
-@bot.tree.error
-async def on_app_command_error(
-    interaction: discord.Interaction,
-    error
-):
-
-    print("COMMAND ERROR:")
-    print(error)
-    traceback.print_exc()
-
-    try:
-
-        if interaction.response.is_done():
-
-            await interaction.followup.send(
-                f"❌ Error: {error}",
-                ephemeral=True
-            )
-
-        else:
-
-            await interaction.response.send_message(
-                f"❌ Error: {error}",
-                ephemeral=True
-            )
-
-    except:
-        pass
-
-# =====================================================
-# START BOT
-# =====================================================
+# =========================================================
+# START
+# =========================================================
 
 bot.run(TOKEN)
