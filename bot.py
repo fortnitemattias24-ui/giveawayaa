@@ -6,8 +6,6 @@ import traceback
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
-GUILD_ID = 1504178459902087188
-
 intents = discord.Intents.default()
 intents.message_content = True
 
@@ -182,8 +180,7 @@ class GiveawayModal(discord.ui.Modal, title="Create Giveaway"):
 
 @bot.tree.command(
     name="panel",
-    description="Create a script panel",
-    guild=discord.Object(id=GUILD_ID)
+    description="Create a script panel"
 )
 async def panel(interaction: discord.Interaction):
 
@@ -197,8 +194,7 @@ async def panel(interaction: discord.Interaction):
 
 @bot.tree.command(
     name="giveaway",
-    description="Create a giveaway",
-    guild=discord.Object(id=GUILD_ID)
+    description="Create a giveaway"
 )
 async def giveaway(interaction: discord.Interaction):
 
@@ -215,9 +211,7 @@ async def on_ready():
 
     try:
 
-        guild = discord.Object(id=GUILD_ID)
-
-        synced = await bot.tree.sync(guild=guild)
+        synced = await bot.tree.sync()
 
         print("===================================")
         print(f"✅ Logged in as {bot.user}")
