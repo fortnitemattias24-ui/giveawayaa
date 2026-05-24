@@ -5,13 +5,15 @@ import os
 TOKEN = os.getenv("DISCORD_TOKEN")
 
 intents = discord.Intents.default()
-bot = commands.Bot(command_prefix="!", intents=intents)
 
-# =========================================================
-# SCRIPT BUTTON
-# =========================================================
+bot = commands.Bot(
+    command_prefix="!",
+    intents=intents
+)
 
-class ScriptButton(discord.ui.View):
+# =====================================================
+
+class ScriptView(discord.ui.View):
 
     def __init__(self, script):
         super().__init__(timeout=None)
@@ -19,29 +21,22 @@ class ScriptButton(discord.ui.View):
 
     @discord.ui.button(
         label="Get Script!",
-        style=discord.ButtonStyle.success,
-        emoji="📜"
+        style=discord.ButtonStyle.success
     )
-    async def script_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+    async def get_script(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         await interaction.response.send_message(
             f"```lua\n{self.script}\n```",
             ephemeral=True
         )
 
-# =========================================================
-# PANEL MODAL
-# =========================================================
+# =====================================================
 
 class PanelModal(discord.ui.Modal, title="Create Panel"):
 
-    script_name = discord.ui.TextInput(
-        label="Script Name"
-    )
+    script_name = discord.ui.TextInput(label="Script Name")
 
-    image_url = discord.ui.TextInput(
-        label="Image URL"
-    )
+    image_url = discord.ui.TextInput(label="Image URL")
 
     script_content = discord.ui.TextInput(
         label="Script",
@@ -52,7 +47,7 @@ class PanelModal(discord.ui.Modal, title="Create Panel"):
 
         embed = discord.Embed(
             title=self.script_name.value,
-            description="Click below to get the script.",
+            description="Click below to get script.",
             color=0x2b2d31
         )
 
@@ -60,19 +55,17 @@ class PanelModal(discord.ui.Modal, title="Create Panel"):
 
         await interaction.channel.send(
             embed=embed,
-            view=ScriptButton(self.script_content.value)
+            view=ScriptView(self.script_content.value)
         )
 
         await interaction.response.send_message(
-            "✅ Panel created.",
+            "✅ Created panel.",
             ephemeral=True
         )
 
-# =========================================================
-# GIVEAWAY BUTTON
-# =========================================================
+# =====================================================
 
-class GiveawayButton(discord.ui.View):
+class GiveawayView(discord.ui.View):
 
     def __init__(self):
         super().__init__(timeout=None)
@@ -80,15 +73,15 @@ class GiveawayButton(discord.ui.View):
 
     @discord.ui.button(
         label="Enter Giveaway",
-        emoji="🎉",
-        style=discord.ButtonStyle.primary
+        style=discord.ButtonStyle.primary,
+        emoji="🎉"
     )
     async def enter(self, interaction: discord.Interaction, button: discord.ui.Button):
 
         if interaction.user.id in self.users:
 
             await interaction.response.send_message(
-                "❌ You already joined.",
+                "❌ Already entered.",
                 ephemeral=True
             )
             return
@@ -104,39 +97,31 @@ class GiveawayButton(discord.ui.View):
             ephemeral=True
         )
 
-# =========================================================
-# GIVEAWAY MODAL
-# =========================================================
+# =====================================================
 
 class GiveawayModal(discord.ui.Modal, title="Create Giveaway"):
 
-    title_input = discord.ui.TextInput(
-        label="Giveaway Title"
-    )
+    giveaway_title = discord.ui.TextInput(label="Title")
 
-    winners_input = discord.ui.TextInput(
-        label="Total Winners"
-    )
+    winners = discord.ui.TextInput(label="Winners")
 
-    ends_input = discord.ui.TextInput(
-        label="Ends In"
-    )
+    ends_in = discord.ui.TextInput(label="Ends In")
 
     async def on_submit(self, interaction: discord.Interaction):
 
         embed = discord.Embed(
-            title=f"🎉 {self.title_input.value}",
+            title=f"🎉 {self.giveaway_title.value}",
             description=(
                 f"👑 Hosted By: {interaction.user.mention}\n"
-                f"🏆 Winners: {self.winners_input.value}\n"
-                f"⏰ Ends In: {self.ends_input.value}"
+                f"🏆 Winners: {self.winners.value}\n"
+                f"⏰ Ends In: {self.ends_in.value}"
             ),
             color=0x2b2d31
         )
 
         await interaction.channel.send(
             embed=embed,
-            view=GiveawayButton()
+            view=GiveawayView()
         )
 
         await interaction.response.send_message(
@@ -144,41 +129,34 @@ class GiveawayModal(discord.ui.Modal, title="Create Giveaway"):
             ephemeral=True
         )
 
-# =========================================================
-# PANEL COMMAND
-# =========================================================
+# =====================================================
+# NEW COMMAND NAMES
+# =====================================================
 
-@bot.tree.command(name="panel", description="Create script panel")
-async def panel(interaction: discord.Interaction):
+@bot.tree.command(name="newpanel", description="Create panel")
+async def newpanel(interaction: discord.Interaction):
 
     await interaction.response.send_modal(
         PanelModal()
     )
 
-# =========================================================
-# GIVEAWAY COMMAND
-# =========================================================
-
-@bot.tree.command(name="giveaway", description="Create giveaway")
-async def giveaway(interaction: discord.Interaction):
+@bot.tree.command(name="newgiveaway", description="Create giveaway")
+async def newgiveaway(interaction: discord.Interaction):
 
     await interaction.response.send_modal(
         GiveawayModal()
     )
 
-# =========================================================
-# READY
-# =========================================================
+# =====================================================
 
 @bot.event
 async def on_ready():
 
-    await bot.tree.sync()
+    synced = await bot.tree.sync()
 
     print(f"Logged in as {bot.user}")
+    print(f"Synced {len(synced)} commands")
 
-# =========================================================
-# START
-# =========================================================
+# =====================================================
 
 bot.run(TOKEN)
