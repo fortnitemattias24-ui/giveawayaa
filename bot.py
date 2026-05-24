@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import os
+import traceback
 
 TOKEN = os.getenv("DISCORD_TOKEN")
 
@@ -37,7 +38,7 @@ class ScriptView(discord.ui.View):
     ):
 
         await interaction.response.send_message(
-            self.script,
+            f"```lua\n{self.script}\n```",
             ephemeral=True
         )
 
@@ -67,13 +68,11 @@ class PanelModal(discord.ui.Modal, title="Create Script Panel"):
 
         embed = discord.Embed(
             title=self.script_name.value,
-            description="Click the button below to get the script.",
+            description="Press the button below to get the script.",
             color=0x2b2d31
         )
 
-        embed.set_image(
-            url=self.image_url.value
-        )
+        embed.set_image(url=self.image_url.value)
 
         embed.set_footer(
             text=f"Made by {interaction.user}"
@@ -85,7 +84,7 @@ class PanelModal(discord.ui.Modal, title="Create Script Panel"):
         )
 
         await interaction.response.send_message(
-            "✅ Script panel created.",
+            "✅ Panel created.",
             ephemeral=True
         )
 
@@ -214,11 +213,55 @@ async def giveaway(interaction: discord.Interaction):
 @bot.event
 async def on_ready():
 
-    guild = discord.Object(id=GUILD_ID)
+    try:
 
-    await bot.tree.sync(guild=guild)
+        guild = discord.Object(id=GUILD_ID)
 
-    print(f"✅ Logged in as {bot.user}")
+        synced = await bot.tree.sync(guild=guild)
+
+        print("===================================")
+        print(f"✅ Logged in as {bot.user}")
+        print(f"✅ Synced {len(synced)} commands")
+        print("===================================")
+
+    except Exception as e:
+
+        print("SYNC ERROR:")
+        print(e)
+        traceback.print_exc()
+
+# =====================================================
+# COMMAND ERROR HANDLER
+# =====================================================
+
+@bot.tree.error
+async def on_app_command_error(
+    interaction: discord.Interaction,
+    error
+):
+
+    print("COMMAND ERROR:")
+    print(error)
+    traceback.print_exc()
+
+    try:
+
+        if interaction.response.is_done():
+
+            await interaction.followup.send(
+                f"❌ Error: {error}",
+                ephemeral=True
+            )
+
+        else:
+
+            await interaction.response.send_message(
+                f"❌ Error: {error}",
+                ephemeral=True
+            )
+
+    except:
+        pass
 
 # =====================================================
 # START BOT
