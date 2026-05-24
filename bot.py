@@ -26,6 +26,7 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 async def setup_db():
 
+```
 async with aiosqlite.connect(DB) as db:
 
     await db.execute("""
@@ -49,6 +50,7 @@ async with aiosqlite.connect(DB) as db:
 
     await db.commit()
 ```
+
 
 # =========================================================
 
