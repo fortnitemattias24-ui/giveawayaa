@@ -25,20 +25,21 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 # =========================================================
 
 async def setup_db():
-async with aiosqlite.connect(DB) as db:
-await db.execute("""
-CREATE TABLE IF NOT EXISTS giveaways (
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-message_id INTEGER,
-channel_id INTEGER,
-title TEXT,
-host_id INTEGER,
-winners INTEGER,
-ends_at INTEGER
-)
-""")
 
-```
+async with aiosqlite.connect(DB) as db:
+
+    await db.execute("""
+    CREATE TABLE IF NOT EXISTS giveaways (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message_id INTEGER,
+        channel_id INTEGER,
+        title TEXT,
+        host_id INTEGER,
+        winners INTEGER,
+        ends_at INTEGER
+    )
+    """)
+
     await db.execute("""
     CREATE TABLE IF NOT EXISTS giveaway_entries (
         giveaway_id INTEGER,
